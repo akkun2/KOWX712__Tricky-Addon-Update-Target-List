@@ -48,9 +48,11 @@ export class KeyboxRepo {
     iframe.setAttribute('width', '100%')
     iframe.setAttribute('height', '100%')
     iframe.setAttribute('frameborder', '0')
-    iframe.setAttribute('allow', 'clipboard-read; clipboard-write')
+    iframe.setAttribute('allow', 'clipboard-read *; clipboard-write *')
     iframe.addEventListener('load', () => {
-      this.#startHandshake()
+      if (iframe.src.startsWith(KEYBOX_REPO_URL)) {
+        this.#startHandshake()
+      }
       this.#hideLoading()
     })
     return iframe
