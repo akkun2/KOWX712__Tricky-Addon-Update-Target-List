@@ -84,7 +84,7 @@ export class Keybox {
   }
 
   async setKeybox(content: string, cmd: string = 'cat'): Promise<boolean> {
-    await File.move(this.keyboxPath, `${this.keyboxPath}.bak`).catch(() => {})
+    await File.copy(this.keyboxPath, `${this.keyboxPath}.bak`).catch(() => {})
 
     try {
       await File.write(this.keyboxPath, content, cmd)
