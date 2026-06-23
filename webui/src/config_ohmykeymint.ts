@@ -3,6 +3,23 @@ import { Config, PolicySchema } from './config'
 import type { ConfigData } from './config'
 import { parse, stringify } from 'smol-toml'
 
+function prettyPrintToml(toml: string): string {
+  const scoopMatch = toml.match(/^scoop = \[(.*)\]$/m)
+  if (!scoopMatch) return toml
+
+  const items = scoopMatch[1]
+    .split(',')
+    .map((v: string) => v.trim())
+    .filter((v: string) => v.length > 0)
+
+  if (items.length <= 2) return toml
+
+  return toml.replace(
+    /^scoop = \[.*\]$/m,
+    `scoop = [\n${items.map((item: string) => `  ${item}`).join(',\n')},\n]`
+  )
+}
+
 const OMK_POLICY_SCHEMA = new PolicySchema({
   os_version: {
     label: 'OS Version',
@@ -114,7 +131,7 @@ export class ConfigOhMyKeyMint extends Config {
     const injector = this.#injector ?? {}
     injector.scoop = data.target ?? []
     this.#injector = injector
-    await File.write(this.INJECTOR_FILE, stringify(this.#injector))
+    await File.write(this.INJECTOR_FILE, prettyPrintToml(stringify(this.#injector)))
 
     const omkConfig = this.#omkConfig ?? {}
     const trust = (omkConfig.trust ?? {}) as Record<string, unknown>
