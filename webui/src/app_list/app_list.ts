@@ -170,16 +170,27 @@ export class AppList {
   async deselectUnnecessary(): Promise<void> {
     try {
       const link = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/more-exclude.json`
-      let response = await fetch(link)
-      if (!response.ok) {
-        response = await fetch(`https://gh.sevencdn.com/${link}`)
-      }
-      if (!response.ok) throw new Error('Failed to download unnecessary apps')
+      let response: Response | null = null
 
-      const data: { data: Array<{ apps: Array<{ 'package-name': string }> }> } = await response.json()
-      const excludeList: string[] = data.data
-        .flatMap(category => category.apps)
-        .map(app => app['package-name'])
+      try {
+        response = await fetch(link)
+      } catch {}
+
+      if (!response || !response.ok) {
+        try {
+          response = await fetch(`https://gh.sevencdn.com/${link}`)
+        } catch {}
+      }
+
+      let excludeList: string[] = []
+      if (response && response.ok) {
+        const data: { data: Array<{ apps: Array<{ 'package-name': string }> }> } = await response.json()
+        excludeList = data.data
+          .flatMap(category => category.apps)
+          .map(app => app['package-name'])
+      } else {
+        console.warn('Failed to fetch online unnecessary apps list, using local xposed list only')
+      }
 
       const xposedList = await this.#cli.getXposedList()
       const unnecessaryApps = new Set([...excludeList, ...xposedList])

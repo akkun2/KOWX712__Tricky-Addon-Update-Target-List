@@ -45,11 +45,19 @@ export class I18nDialog {
 
     try {
       const link = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/webui/public/locales/GUIDE.md`
-      let response = await fetch(link).catch(() => null)
+      let response: Response | null = null
+
+      try {
+        response = await fetch(link)
+      } catch {}
+
       if (!response || !response.ok) {
-        response = await fetch(`https://gh.sevencdn.com/${link}`)
+        try {
+          response = await fetch(`https://gh.sevencdn.com/${link}`)
+        } catch {}
       }
-      if (!response.ok) throw new Error(`HTTP error status: ${response.status}`)
+
+      if (!response || !response.ok) throw new Error(`HTTP error status: ${response?.status}`)
       const text = await response.text()
       renderMarkdown(text, contentEl, this.cli)
     } catch (error) {

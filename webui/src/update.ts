@@ -199,15 +199,23 @@ export class UpdateManager {
   }
 
   async #fetchWithFallback(url: string): Promise<Response> {
-    const response = await fetch(url)
-    if (response.ok) return response
+    let firstStatus: number | string = 'network error'
+
+    try {
+      const response = await fetch(url)
+      if (response.ok) return response
+      firstStatus = response.status
+    } catch {}
 
     const mirrorUrl = `${MIRROR_BASE}${url}`
-    const mirrorResponse = await fetch(mirrorUrl)
-    if (!mirrorResponse.ok) {
-      throw new Error(`Fetch failed: ${response.status} (direct), ${mirrorResponse.status} (mirror)`)
+    try {
+      const mirrorResponse = await fetch(mirrorUrl)
+      if (mirrorResponse.ok) return mirrorResponse
+      throw new Error(`Fetch failed: ${firstStatus} (direct), ${mirrorResponse.status} (mirror)`)
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith('Fetch failed')) throw error
+      throw new Error(`Fetch failed: ${firstStatus} (direct), network error (mirror)`)
     }
-    return mirrorResponse
   }
 
   async #downloadFile(url: string, destPath: string): Promise<void> {
